@@ -1,0 +1,22 @@
+/vis/open OGL 800x600-0+0
+/vis/sceneHandler/create
+/vis/scene/create
+/vis/sceneHandler/attach
+/vis/scene/add/volume
+/vis/scene/add/trajectories smooth
+/vis/scene/add/hits
+/vis/scene/endOfEventAction accumulate 50
+/vis/viewer/set/autoRefresh true
+/vis/viewer/set/style surface
+/vis/modeling/trajectories/create/drawByParticleID
+/vis/modeling/trajectories/drawByParticleID-0/default/setDrawStepPts true
+/vis/modeling/trajectories/drawByParticleID-0/default/setStepPtsSize 2
+/vis/modeling/trajectories/drawByParticleID-0/default/setLineWidth 2
+/vis/modeling/trajectories/drawByParticleID-0/default/setColour 0.8 0.8 0.8
+/vis/modeling/trajectories/drawByParticleID-0/particle mu-/set 1 0 0
+/vis/modeling/trajectories/drawByParticleID-0/particle mu+/set 0 0 1
+/vis/modeling/trajectories/drawByParticleID-0/particle gamma/set 0 1 0
+
+/vis/scene/add/axes 0 0 0 0.5 m
+/run/initialize
+/run/beamOn 50
