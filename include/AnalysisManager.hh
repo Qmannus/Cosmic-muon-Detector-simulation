@@ -1,9 +1,8 @@
 #ifndef ANALYSIS_MANAGER_HH
 #define ANALYSIS_MANAGER_HH
 
+#include <G4AnalysisManager.hh>
 #include <G4ThreeVector.hh>
-
-class G4AnalysisManager;
 
 class AnalysisManager {
 public:

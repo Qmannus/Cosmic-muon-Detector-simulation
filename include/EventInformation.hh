@@ -6,6 +6,8 @@
 
 class EventInformation : public G4VUserEventInformation {
 public:
+  void Print() const override {}
+
   void SetPrimaryEnergy(double energy) { primary_energy_ = energy; }
   void SetPrimaryDirection(const G4ThreeVector& dir) { primary_direction_ = dir; }
   void SetPrimaryPosition(const G4ThreeVector& pos) { primary_position_ = pos; }
