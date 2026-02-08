@@ -9,9 +9,6 @@
 /vis/modeling/trajectories/drawByParticleID-0/default/setDrawStepPts true
 /vis/modeling/trajectories/drawByParticleID-0/default/setStepPtsSize 2
 /vis/modeling/trajectories/drawByParticleID-0/default/setLineWidth 2
-/vis/modeling/trajectories/drawByParticleID-0/particle mu-/set 1 0 0
-/vis/modeling/trajectories/drawByParticleID-0/particle mu+/set 0 0 1
-/vis/modeling/trajectories/drawByParticleID-0/particle gamma/set 0 1 0
 /vis/scene/add/axes 0 0 0 0.5 m
 /run/initialize
 /run/beamOn 50

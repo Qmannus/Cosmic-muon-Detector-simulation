@@ -26,6 +26,7 @@ AnalysisManager::AnalysisManager() {
 
 void AnalysisManager::Book() {
   manager_->SetVerboseLevel(1);
+  manager_->SetDefaultFileType("root");
   manager_->SetFileName("cosmic_muon");
 
   manager_->CreateH1("energy_spectrum", "Primary energy (GeV)", 200, 0.0, 100.0);
