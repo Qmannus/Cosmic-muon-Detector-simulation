@@ -17,7 +17,10 @@ DetectorConstruction::DetectorConstruction() = default;
 void DetectorConstruction::DefineMaterials() {
   auto nist = G4NistManager::Instance();
   air_ = nist->FindOrBuildMaterial("G4_AIR");
-  scintillator_ = nist->FindOrBuildMaterial("G4_PLASTIC_SC_VINYLTOLUENE");
+  scintillator_ = nist->FindOrBuildMaterial("G4_POLYVINYL_TOLUENE");
+  if (!scintillator_) {
+    scintillator_ = nist->FindOrBuildMaterial("G4_PLASTIC_SC_VINYLTOLUENE");
+  }
   silicon_ = nist->FindOrBuildMaterial("G4_Si");
 }
 
