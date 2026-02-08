@@ -2,6 +2,7 @@
 #include "DetectorConstruction.hh"
 #include "PhysicsList.hh"
 
+#include <G4ios.hh>
 #include <G4RunManagerFactory.hh>
 #include <G4UIExecutive.hh>
 #include <G4UImanager.hh>
@@ -26,7 +27,12 @@ int main(int argc, char** argv) {
 
   auto ui_manager = G4UImanager::GetUIpointer();
   if (ui) {
-    ui_manager->ApplyCommand("/control/execute macros/vis.mac");
+    ui_manager->ApplyCommand("/control/macroPath macros");
+    auto status = ui_manager->ApplyCommand("/control/execute vis.mac");
+    if (status != 0) {
+      G4cout << "Warning: visualization macro failed with status " << status
+             << ". Continuing without aborting the run." << G4endl;
+    }
     ui->SessionStart();
     delete ui;
   } else {
