@@ -7,6 +7,7 @@
 #include <G4PhysicalConstants.hh>
 #include <G4SystemOfUnits.hh>
 #include <Randomize.hh>
+#include <CLHEP/Random/RandPoisson.h>
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -53,7 +54,7 @@ PlaneReconstruction ReconstructPlane(const G4ThreeVector& hit_pos, double hit_ti
   for (size_t i = 0; i < sipm_positions.size(); ++i) {
     const auto distance_cm = (hit_pos - sipm_positions[i]).mag() / cm;
     const double tof_ns = distance_cm / v_gamma;
-    const double pe = G4RandPoisson::shoot(expected_pe);
+    const double pe = CLHEP::RandPoisson::shoot(expected_pe);
     if (pe < kTriggerThresholdPE) {
       measured_times.push_back(std::numeric_limits<double>::quiet_NaN());
       continue;
