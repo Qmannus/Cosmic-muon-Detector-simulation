@@ -22,6 +22,7 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 
 set(SOURCES
   src/main.cc
+  src/ActionInitialization.cc
   src/DetectorConstruction.cc
   src/PhysicsList.cc
   src/PrimaryGeneratorAction.cc
