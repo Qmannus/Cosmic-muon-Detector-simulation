@@ -3,6 +3,10 @@ project(CosmicMuonDetectorSimulation LANGUAGES CXX)
 
 option(WITH_GEANT4_UIVIS "Build with Geant4 UI and visualization" ON)
 
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+  set(CMAKE_INSTALL_PREFIX "${PROJECT_BINARY_DIR}/install" CACHE PATH "Install path" FORCE)
+endif()
+
 if(WITH_GEANT4_UIVIS)
   find_package(Geant4 REQUIRED ui_all vis_all)
 else()
