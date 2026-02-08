@@ -16,12 +16,25 @@ DetectorConstruction::DetectorConstruction() = default;
 
 void DetectorConstruction::DefineMaterials() {
   auto nist = G4NistManager::Instance();
-  air_ = nist->FindOrBuildMaterial("G4_AIR");
-  scintillator_ = nist->FindOrBuildMaterial("G4_POLYVINYL_TOLUENE");
-  if (!scintillator_) {
-    scintillator_ = nist->FindOrBuildMaterial("G4_PLASTIC_SC_VINYLTOLUENE");
-  }
-  silicon_ = nist->FindOrBuildMaterial("G4_Si");
+
+  auto element_h = nist->FindOrBuildElement("H");
+  auto element_c = nist->FindOrBuildElement("C");
+  auto element_n = nist->FindOrBuildElement("N");
+  auto element_o = nist->FindOrBuildElement("O");
+  auto element_ar = nist->FindOrBuildElement("Ar");
+  auto element_si = nist->FindOrBuildElement("Si");
+
+  air_ = new G4Material("Air", 1.225 * mg / cm3, 3);
+  air_->AddElement(element_n, 0.78);
+  air_->AddElement(element_o, 0.21);
+  air_->AddElement(element_ar, 0.01);
+
+  scintillator_ = new G4Material("BC408", 1.023 * g / cm3, 2);
+  scintillator_->AddElement(element_c, 1000);
+  scintillator_->AddElement(element_h, 1104);
+
+  silicon_ = new G4Material("Silicon", 2.33 * g / cm3, 1);
+  silicon_->AddElement(element_si, 1);
 }
 
 G4VPhysicalVolume* DetectorConstruction::Construct() {
