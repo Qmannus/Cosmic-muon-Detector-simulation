@@ -11,4 +11,4 @@
 /vis/modeling/trajectories/drawByParticleID-0/default/setLineWidth 2
 /vis/scene/add/axes 0 0 0 0.5 m
 /run/initialize
-/run/beamOn 50
+/run/beamOn 10000
