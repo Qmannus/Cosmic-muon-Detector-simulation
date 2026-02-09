@@ -3,9 +3,10 @@
 #include <G4AnalysisManager.hh>
 #include <G4PhysicalConstants.hh>
 #include <G4SystemOfUnits.hh>
+#include <G4Threading.hh>
 
 namespace {
-AnalysisManager* g_instance = nullptr;
+G4ThreadLocal AnalysisManager* g_instance = nullptr;
 }
 
 AnalysisManager* AnalysisManager::Instance() {
