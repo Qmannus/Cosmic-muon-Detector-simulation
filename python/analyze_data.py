@@ -13,6 +13,8 @@ ROOT_FILE = pathlib.Path("cosmic_muon.root")
 OUTPUT_DIR = pathlib.Path("analysis_plots")
 OUTPUT_DIR.mkdir(exist_ok=True)
 
+PLANE_SEPARATION_CM = 63.0
+
 
 def _gaussian_fit(data):
     if len(data) == 0:
@@ -149,6 +151,89 @@ def main():
     ax[1].set_ylabel("Efficiency")
     fig.tight_layout()
     fig.savefig(OUTPUT_DIR / "efficiency_studies.png", dpi=200)
+    plt.close(fig)
+
+    # Timing + reconstruction distributions
+    fig, ax = plt.subplots(2, 2, figsize=(10, 8))
+    ax = ax.flatten()
+    h_time_diff = file["time_diff"].to_numpy()
+    h_reco_x = file["reco_x"].to_numpy()
+    h_reco_y = file["reco_y"].to_numpy()
+    h_track_theta = file["track_theta"].to_numpy()
+
+    ax[0].stairs(h_time_diff[0], h_time_diff[1], fill=True, alpha=0.7, color="teal")
+    ax[0].set_xlabel("Δt [ns]")
+    ax[0].set_ylabel("Counts")
+    ax[0].set_title("Plane timing difference")
+
+    ax[1].stairs(h_reco_x[0], h_reco_x[1], fill=True, alpha=0.7, color="steelblue")
+    ax[1].set_xlabel("Reco X [cm]")
+    ax[1].set_ylabel("Counts")
+    ax[1].set_title("Reconstructed X")
+
+    ax[2].stairs(h_reco_y[0], h_reco_y[1], fill=True, alpha=0.7, color="slateblue")
+    ax[2].set_xlabel("Reco Y [cm]")
+    ax[2].set_ylabel("Counts")
+    ax[2].set_title("Reconstructed Y")
+
+    ax[3].stairs(h_track_theta[0], h_track_theta[1], fill=True, alpha=0.7, color="coral")
+    ax[3].set_xlabel("Track θ [rad]")
+    ax[3].set_ylabel("Counts")
+    ax[3].set_title("Track zenith angle")
+    fig.tight_layout()
+    fig.savefig(OUTPUT_DIR / "timing_reco_distributions.png", dpi=200)
+    plt.close(fig)
+
+    # Chi2 vs residuals
+    fig, ax = plt.subplots(figsize=(6, 5))
+    if len(tracks):
+        ax.scatter(tracks["chi2"], tracks["residual_cm"], s=6, alpha=0.4)
+    ax.set_xlabel("Track chi2")
+    ax.set_ylabel("Residual [cm]")
+    ax.set_title("Reconstruction quality correlation")
+    fig.tight_layout()
+    fig.savefig(OUTPUT_DIR / "chi2_vs_residual.png", dpi=200)
+    plt.close(fig)
+
+    # 3D reconstructed trajectories (using track angles + reconstructed midpoint)
+    fig = plt.figure(figsize=(7, 6))
+    ax = fig.add_subplot(111, projection="3d")
+    ax.set_title("Reconstructed track samples")
+    ax.set_xlabel("x [cm]")
+    ax.set_ylabel("y [cm]")
+    ax.set_zlabel("z [cm]")
+
+    if len(events) and len(tracks):
+        z0 = 0.0
+        z1 = PLANE_SEPARATION_CM
+        z_mid = 0.5 * (z0 + z1)
+        max_tracks = min(len(tracks), len(events))
+        sample_count = min(max_tracks, 200)
+        if sample_count > 0:
+            indices = np.random.choice(max_tracks, size=sample_count, replace=False)
+            for idx in indices:
+                theta = tracks["theta"][idx]
+                phi = tracks["phi"][idx]
+                x_mid = events["reco_x_cm"][idx]
+                y_mid = events["reco_y_cm"][idx]
+                values = np.array([theta, phi, x_mid, y_mid], dtype=float)
+                if not np.isfinite(values).all():
+                    continue
+                dx = np.sin(theta) * np.cos(phi)
+                dy = np.sin(theta) * np.sin(phi)
+                dz = np.cos(theta)
+                if abs(dz) < 1e-6:
+                    continue
+                t0 = (z0 - z_mid) / dz
+                t1 = (z1 - z_mid) / dz
+                x0 = x_mid + dx * t0
+                y0 = y_mid + dy * t0
+                x1 = x_mid + dx * t1
+                y1 = y_mid + dy * t1
+                ax.plot([x0, x1], [y0, y1], [z0, z1], alpha=0.3, linewidth=0.7)
+
+    fig.tight_layout()
+    fig.savefig(OUTPUT_DIR / "trajectory_reconstruction.png", dpi=200)
     plt.close(fig)
 
     # Summary plot
