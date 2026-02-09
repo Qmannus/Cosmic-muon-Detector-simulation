@@ -14,6 +14,7 @@ OUTPUT_DIR = pathlib.Path("analysis_plots")
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 PLANE_SEPARATION_CM = 63.0
+VISUAL_TRACK_COUNT = 50
 
 
 def _gaussian_fit(data):
@@ -33,6 +34,14 @@ def _hist_stats(hist):
     mean = np.sum(centers * counts) / total
     variance = np.sum(counts * (centers - mean) ** 2) / total
     return mean, np.sqrt(variance)
+
+
+def _format_stat(value, unit=""):
+    if not np.isfinite(value):
+        return "N/A"
+    if unit:
+        return f"{value:.3g} {unit}"
+    return f"{value:.3g}"
 
 
 def main():
@@ -231,9 +240,135 @@ def main():
                 x1 = x_mid + dx * t1
                 y1 = y_mid + dy * t1
                 ax.plot([x0, x1], [y0, y1], [z0, z1], alpha=0.3, linewidth=0.7)
+    else:
+        ax.text2D(0.1, 0.9, "No reconstructed tracks available", transform=ax.transAxes)
 
     fig.tight_layout()
     fig.savefig(OUTPUT_DIR / "trajectory_reconstruction.png", dpi=200)
+    plt.close(fig)
+
+    # 3D reconstructed trajectories (fixed 50 events)
+    fig = plt.figure(figsize=(7, 6))
+    ax = fig.add_subplot(111, projection="3d")
+    ax.set_title(f"Reconstructed tracks ({VISUAL_TRACK_COUNT} events)")
+    ax.set_xlabel("x [cm]")
+    ax.set_ylabel("y [cm]")
+    ax.set_zlabel("z [cm]")
+
+    if len(events) and len(tracks):
+        z0 = 0.0
+        z1 = PLANE_SEPARATION_CM
+        z_mid = 0.5 * (z0 + z1)
+        max_tracks = min(len(tracks), len(events))
+        sample_count = min(max_tracks, VISUAL_TRACK_COUNT)
+        if sample_count > 0:
+            indices = np.random.choice(max_tracks, size=sample_count, replace=False)
+            for idx in indices:
+                theta = tracks["theta"][idx]
+                phi = tracks["phi"][idx]
+                x_mid = events["reco_x_cm"][idx]
+                y_mid = events["reco_y_cm"][idx]
+                values = np.array([theta, phi, x_mid, y_mid], dtype=float)
+                if not np.isfinite(values).all():
+                    continue
+                dx = np.sin(theta) * np.cos(phi)
+                dy = np.sin(theta) * np.sin(phi)
+                dz = np.cos(theta)
+                if abs(dz) < 1e-6:
+                    continue
+                t0 = (z0 - z_mid) / dz
+                t1 = (z1 - z_mid) / dz
+                x0 = x_mid + dx * t0
+                y0 = y_mid + dy * t0
+                x1 = x_mid + dx * t1
+                y1 = y_mid + dy * t1
+                ax.plot([x0, x1], [y0, y1], [z0, z1], alpha=0.5, linewidth=0.9)
+    else:
+        ax.text2D(0.1, 0.9, "No reconstructed tracks available", transform=ax.transAxes)
+
+    fig.tight_layout()
+    fig.savefig(OUTPUT_DIR / "trajectory_reconstruction_50.png", dpi=200)
+    plt.close(fig)
+
+    # Overall efficiency + detected energy comparison
+    fig, ax = plt.subplots(1, 2, figsize=(12, 4))
+    detected_flags = events["detected"] if len(events) else np.array([])
+    total_events = len(detected_flags)
+    detected_events = int(np.sum(detected_flags)) if total_events else 0
+    efficiency = detected_events / total_events if total_events else 0.0
+
+    ax[0].bar(["Total", "Detected"], [total_events, detected_events], color=["gray", "seagreen"])
+    ax[0].set_ylabel("Events")
+    ax[0].set_title(f"Overall efficiency = {efficiency:.3f}")
+
+    if total_events:
+        energies = events["energy_gev"]
+        detected_mask = detected_flags.astype(bool)
+        ax[1].hist(energies, bins=60, alpha=0.6, label="All", color="steelblue")
+        ax[1].hist(energies[detected_mask], bins=60, alpha=0.6, label="Detected", color="orange")
+        ax[1].set_xlabel("Energy [GeV]")
+        ax[1].set_ylabel("Counts")
+        ax[1].legend()
+        ax[1].set_title("Energy distribution: sent vs detected")
+    else:
+        ax[1].text(0.5, 0.5, "No event data available", ha="center", va="center")
+        ax[1].set_axis_off()
+
+    fig.tight_layout()
+    fig.savefig(OUTPUT_DIR / "overall_efficiency.png", dpi=200)
+    plt.close(fig)
+
+    # Sigma summary plot (track, hit, timing)
+    track_sigma = sigma if len(track_residuals) else float("nan")
+    hit_sigma = _hist_stats(h_resid)[1] if h_resid[0].size else float("nan")
+    time_sigma = _hist_stats(h_time_diff)[1] if h_time_diff[0].size else float("nan")
+
+    fig, ax = plt.subplots(figsize=(6, 4))
+    labels = ["Track σ", "Hit σ", "Timing σ"]
+    values = [track_sigma, hit_sigma, time_sigma]
+    ax.bar(labels, values, color=["slateblue", "teal", "coral"])
+    ax.set_ylabel("σ")
+    ax.set_title("Reconstruction and timing resolution")
+    fig.tight_layout()
+    fig.savefig(OUTPUT_DIR / "sigma_summary.png", dpi=200)
+    plt.close(fig)
+
+    # Summary table of key metrics
+    energy_mean, energy_sigma = _hist_stats(h_energy)
+    det_eff = efficiency
+    fig, ax = plt.subplots(figsize=(6, 3))
+    ax.axis("off")
+    table_data = [
+        ["Total events", f"{total_events}"],
+        ["Detected events", f"{detected_events}"],
+        ["Overall efficiency", f"{det_eff:.3f}"],
+        ["Energy mean", _format_stat(energy_mean, "GeV")],
+        ["Energy σ", _format_stat(energy_sigma, "GeV")],
+        ["Track residual σ", _format_stat(track_sigma, "cm")],
+        ["Hit residual σ", _format_stat(hit_sigma, "cm")],
+        ["Timing σ", _format_stat(time_sigma, "ns")],
+    ]
+    table = ax.table(cellText=table_data, colLabels=["Metric", "Value"], loc="center")
+    table.auto_set_font_size(False)
+    table.set_fontsize(9)
+    table.scale(1.0, 1.3)
+    ax.set_title("Measurement summary")
+    fig.tight_layout()
+    fig.savefig(OUTPUT_DIR / "measurement_summary.png", dpi=200)
+    plt.close(fig)
+
+    # Fun: energy vs angle heatmap
+    fig, ax = plt.subplots(figsize=(6, 5))
+    if len(events):
+        ax.hist2d(events["energy_gev"], events["cos_theta"], bins=50, cmap="magma")
+        ax.set_xlabel("Energy [GeV]")
+        ax.set_ylabel("cos(theta)")
+        ax.set_title("Energy vs cos(theta)")
+    else:
+        ax.text(0.5, 0.5, "No event data available", ha="center", va="center")
+        ax.set_axis_off()
+    fig.tight_layout()
+    fig.savefig(OUTPUT_DIR / "energy_vs_angle.png", dpi=200)
     plt.close(fig)
 
     # Summary plot
