@@ -1,0 +1,14 @@
+/vis/open OGL 800x600-0+0
+/vis/drawVolume
+/vis/viewer/set/autoRefresh true
+/vis/viewer/set/style surface
+/vis/scene/add/trajectories smooth
+/vis/scene/add/hits
+/vis/scene/endOfEventAction accumulate 50
+/vis/modeling/trajectories/create/drawByParticleID
+/vis/modeling/trajectories/drawByParticleID-0/default/setDrawStepPts true
+/vis/modeling/trajectories/drawByParticleID-0/default/setStepPtsSize 2
+/vis/modeling/trajectories/drawByParticleID-0/default/setLineWidth 2
+/vis/scene/add/axes 0 0 0 0.5 m
+/run/initialize
+/run/beamOn 10000
